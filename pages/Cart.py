@@ -2,6 +2,7 @@ import streamlit as st
 import FinanceDataReader as fdr
 import datetime
 import plotly.graph_objects as go
+import pandas as pd
 
 # 1. CSS 수정: 카드 스타일 및 간격 설정
 st.markdown("""
