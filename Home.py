@@ -117,6 +117,28 @@ with f3:
         </div>
     </div>
     """, unsafe_allow_html=True)
+    # ---------------- HELP / CONTACT ----------------
+st.markdown("""
+<div style="
+    margin-top: 60px;
+    padding: 30px;
+    background: linear-gradient(135deg, #111827, #0b1220);
+    border-radius: 20px;
+    border: 1px solid #30363d;
+    text-align: center;
+">
+    <div style="font-size: 20px; font-weight: 700; margin-bottom: 12px;">
+        🤔 더 궁금한 점이 있으신가요?
+    </div>
+    <div style="color: #9da7b1; font-size: 16px; line-height: 1.6;">
+        서비스 사용 중 궁금한 점은 <b>FAQ</b> 페이지에서 먼저 확인해 주세요.<br>
+        그 외 문의 사항은 아래 이메일로 연락 주시면 답변드리겠습니다.
+    </div>
+    <div style="margin-top: 16px; font-size: 17px; font-weight: 600;">
+        📩 suasua0105@gmail.com
+    </div>
+</div>
+""", unsafe_allow_html=True)
 
 # ---------------- FOOTER ----------------
 st.markdown("---")
