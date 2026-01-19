@@ -1,0 +1,7 @@
+st/
+
+*.txt
+!requirements.txt
+
+.env
+
