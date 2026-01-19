@@ -52,8 +52,7 @@ if "cart" not in st.session_state:
 
 @st.cache_data
 def load_company_list():
-    df = fdr.StockListing("KOSPI")
-    return df[['Name', 'Code']]
+    return pd.read_csv("kospi_list.csv")
 
 company_df = load_company_list()
 
