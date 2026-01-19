@@ -35,7 +35,7 @@ def get_krx_company_list() -> pd.DataFrame:
 
 @st.cache_data
 def load_company_list():
-    return get_krx_company_list()
+    return pd.read_csv("kospi_list.csv")
 
 company_df = load_company_list()
 
