@@ -12,11 +12,11 @@ import matplotlib.pyplot as plt
 import koreanize_matplotlib
 import os
 from dotenv import load_dotenv
+import plotly.graph_objects as go
 
 load_dotenv()
 
-MY_NAME = os.getenv('MY_NAME')
-st.header(MY_NAME)
+st.header( '🔎 종목 검색하기')
 
 def get_krx_company_list() -> pd.DataFrame:
      try:
@@ -33,6 +33,19 @@ def get_krx_company_list() -> pd.DataFrame:
          st.error(f"상장사 명단을 불러오는 데 실패했습니다: {e}")
          return pd.DataFrame(columns=['회사명', '종목코드'])
 
+@st.cache_data
+def load_company_list():
+    return get_krx_company_list()
+
+company_df = load_company_list()
+
+company_name = st.selectbox(
+    "조회할 회사를 선택하세요",
+    company_df["회사명"],
+    index=None,
+    placeholder="회사명을 입력하거나 선택하세요"
+)
+
 def get_stock_code_by_company(company_name: str) -> str:
     # 만약 입력값이 숫자 6자리라면 그대로 반환
     if company_name.isdigit() and len(company_name) == 6:
@@ -45,21 +58,31 @@ def get_stock_code_by_company(company_name: str) -> str:
     else:
         raise ValueError(f"'{company_name}'을 찾을 수 없습니다. 종목코드 6자리를 직접 입력해보세요.")
 
-company_name = st.text_input('조회할 회사를 입력하세요')
 # https://docs.streamlit.io/develop/api-reference/widgets/st.date_input
 
-today = datetime.datetime.now()
-jan_1 = datetime.date(today.year, 1, 1)
+def get_start_date(period: str) -> str:
+    today = datetime.date.today()
 
-selected_dates = st.date_input(
-    '조회할 회사를 입력하세요',
-    (jan_1, today),
-    format="MM.DD.YYYY",
-)
+    if period == "1주일":
+        start = today - datetime.timedelta(days=7)
+    elif period == "1개월":
+        start = today - datetime.timedelta(days=30)
+    elif period == "3개월":
+        start = today - datetime.timedelta(days=90)
+    elif period == "1년":
+        start = today - datetime.timedelta(days=365)
+    elif period == "3년":
+        start = today - datetime.timedelta(days=365*3)
 
-# st.write(selected_dates)
+    return start.strftime("%Y%m%d"), today.strftime("%Y%m%d")
 
 confirm_btn = st.button('조회하기') # 클릭하면 True
+
+period = st.radio(
+    "조회 기간",
+    ["1주일", "1개월", "3개월", "1년", "3년"],
+    horizontal=True
+)
 
 # --- 메인 로직 ---
 if confirm_btn:
@@ -69,8 +92,7 @@ if confirm_btn:
          try:
             with st.spinner('데이터를 수집하는 중...'):
                 stock_code = get_stock_code_by_company(company_name)
-                start_date = selected_dates[0].strftime("%Y%m%d")
-                end_date = selected_dates[1].strftime("%Y%m%d")
+                start_date, end_date = get_start_date(period)
                 
                 price_df = fdr.DataReader(stock_code, start_date, end_date)
                 
@@ -80,12 +102,32 @@ if confirm_btn:
                 st.subheader(f"[{company_name}] 주가 데이터")
                 st.dataframe(price_df.tail(10), width="stretch")
 
-                # Matplotlib 시각화
-                fig, ax = plt.subplots(figsize=(12, 5))
-                price_df['Close'].plot(ax=ax, grid=True, color='red')
-                ax.set_title(f"{company_name} 종가 추이", fontsize=15)
-                st.pyplot(fig)
+                #Plotly 시각화
+                fig = go.Figure()
 
+                fig.add_trace(
+                    go.Scatter(
+                        x=price_df.index,
+                        y=price_df['Close'],
+                        mode='lines',
+                        name='Close',
+                        line=dict(color='red', width=4),
+                        hovertemplate=
+                            "종가: %{y:,.0f}원<br>" +
+                            "거래량: %{customdata:,.0f}<extra></extra>",
+                        customdata=price_df['Volume']
+                    )
+                )
+
+                fig.update_layout(
+                    title=f"{company_name} 종가 추이",
+                    xaxis_title="날짜",
+                    yaxis_title="가격",
+                    template="plotly_white",
+                    hovermode="x unified"
+                )
+
+                st.plotly_chart(fig, use_container_width=True)
                 # 엑셀 다운로드 기능
                 output = BytesIO()
                 with pd.ExcelWriter(output, engine='openpyxl') as writer:
